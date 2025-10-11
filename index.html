@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+  <title>SE & NISHIMOTO</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      touch-action: none;
+    }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #1a1a1a;
+      overflow: hidden;
+      width: 100vw;
+      height: 100vh;
+    }
+    #imageContainer {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      cursor: grab;
+      background: #000;
+    }
+    #imageContainer.grabbing {
+      cursor: grabbing;
+    }
+    #seimage {
+      position: absolute;
+      max-width: none;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      transform-origin: center center;
+      transition: transform 0.1s ease-out;
+      user-select: none;
+      -webkit-user-drag: none;
+    }
+    .controls {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 10px;
+      z-index: 100;
+      background: rgba(0, 0, 0, 0.7);
+      padding: 15px 20px;
+      border-radius: 50px;
+      backdrop-filter: blur(10px);
+    }
+    button {
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      padding: 10px 20px;
+      border-radius: 25px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(5px);
+    }
+    button:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: scale(1.05);
+    }
+    button:active {
+      transform: scale(0.95);
+    }
+    .zoom-indicator {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: rgba(0, 0, 0, 0.7);
+      color: white;
+      padding: 10px 20px;
+      border-radius: 20px;
+      font-size: 14px;
+      z-index: 100;
+      backdrop-filter: blur(10px);
+    }
+    .loading {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: white;
+      font-size: 18px;
+      z-index: 50;
+      display: none;
+    }
+    .loading.active {
+      display: block;
+    }
+    @media (max-width: 768px) {
+      .controls {
+        bottom: 10px;
+        padding: 10px 15px;
+        gap: 5px;
+      }
+      button {
+        padding: 8px 15px;
+        font-size: 12px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="imageContainer">
+    <img id="seimage" alt="se image">
+  </div>
+
+  <div class="loading" id="loading">⏳ Memuat gambar...</div>
+  <div class="zoom-indicator" id="zoomIndicator">100%</div>
+
+  <div class="controls">
+    <button onclick="zoomIn()">🔍+</button>
+    <button onclick="zoomOut()">🔍−</button>
+    <button onclick="resetView()">↺ Reset</button>
+    <button onclick="fitToScreen()">⛶ Fit</button>
+    <button onclick="openWebsite()">🌏 Sushi Ebi</button>
+    <button onclick="openWebsite1()">🌐 Nishimoto</button>
+    <button onclick="openWebsite2()">𝄜 Spreadsheet</button>
+    <button onclick="downloadImage()">⬇</button>
+    <button onclick="refreshImage()">🔄</button>
+  </div>
+
+  <script>
+    const container = document.getElementById('imageContainer');
+    const img = document.getElementById('seimage');
+    const loading = document.getElementById('loading');
+    const zoomIndicator = document.getElementById('zoomIndicator');
+    const dropboxLink = "https://www.dropbox.com/scl/fi/9fzo1juzvwxod5703guml/SE.jpeg?rlkey=9o28w43nfxiawm0jqefhzjyai&raw=1";
+
+    let scale = 1;
+    let translateX = 0;
+    let translateY = 0;
+    let isDragging = false;
+    let startX, startY;
+    let lastX = 0, lastY = 0;
+
+    // Touch zoom
+    let initialDistance = 0;
+    let initialScale = 1;
+
+    function loadImage() {
+      loading.classList.add('active');
+      const noCacheUrl = `${dropboxLink}&t=${Date.now()}`;
+      
+      img.onload = () => {
+        loading.classList.remove('active');
+        fitToScreen();
+      };
+      
+      img.onerror = () => {
+        loading.textContent = '❌ Gagal memuat gambar';
+      };
+      
+      img.src = noCacheUrl;
+    }
+
+    function updateTransform() {
+      const rect = img.getBoundingClientRect();
+      const centerX = window.innerWidth / 2;
+      const centerY = window.innerHeight / 2;
+      
+      img.style.transform = `translate(calc(-50% + ${translateX}px), calc(-50% + ${translateY}px)) scale(${scale})`;
+      zoomIndicator.textContent = `${Math.round(scale * 100)}%`;
+    }
+
+    function fitToScreen() {
+      const containerWidth = container.clientWidth;
+      const containerHeight = container.clientHeight;
+      const imgWidth = img.naturalWidth;
+      const imgHeight = img.naturalHeight;
+
+      const scaleX = containerWidth / imgWidth;
+      const scaleY = containerHeight / imgHeight;
+      scale = Math.min(scaleX, scaleY) * 0.95;
+
+      // Reset ke tengah
+      translateX = 0;
+      translateY = 0;
+      lastX = 0;
+      lastY = 0;
+
+      img.style.left = '50%';
+      img.style.top = '50%';
+      img.style.transform = `translate(-50%, -50%) scale(${scale})`;
+      zoomIndicator.textContent = `${Math.round(scale * 100)}%`;
+    }
+
+    function resetView() {
+      scale = 1;
+      translateX = 0;
+      translateY = 0;
+      img.style.left = '50%';
+      img.style.top = '50%';
+      img.style.transform = 'translate(-50%, -50%)';
+      zoomIndicator.textContent = '100%';
+    }
+
+    function zoomIn() {
+      scale = Math.min(scale * 1.2, 4);
+      updateTransform();
+    }
+
+    function zoomOut() {
+      scale = Math.max(scale / 1.2, 0.1);
+      updateTransform();
+    }
+
+    function downloadImage() {
+      const link = document.createElement('a');
+      link.href = img.src;
+      link.download = 'SE.jpg';
+      link.click();
+    }
+
+    function refreshImage() {
+      loadImage();
+    }
+
+    function openWebsite() {
+      window.open('https://ppicwkb.github.io/Stock/', '_blank');
+    }
+
+        function openWebsite1() {
+        window.open('https://ppicwkb.github.io/Nishimoto/', '_blank');
+        }
+
+    function openWebsite2() {
+        window.open('https://docs.google.com/spreadsheets/d/1xBb45gW7WZM9xOtzy8qlau-VGfqJKU1w6GvB_eVjius/edit?gid=57660292#gid=57660292', '_blank');
+    }
+ 
+
+    // Mouse drag
+    container.addEventListener('mousedown', (e) => {
+      isDragging = true;
+      container.classList.add('grabbing');
+      startX = e.clientX - lastX;
+      startY = e.clientY - lastY;
+    });
+
+    container.addEventListener('mousemove', (e) => {
+      if (!isDragging) return;
+      e.preventDefault();
+      lastX = e.clientX - startX;
+      lastY = e.clientY - startY;
+      translateX = lastX;
+      translateY = lastY;
+      updateTransform();
+    });
+
+    container.addEventListener('mouseup', () => {
+      isDragging = false;
+      container.classList.remove('grabbing');
+    });
+
+    container.addEventListener('mouseleave', () => {
+      isDragging = false;
+      container.classList.remove('grabbing');
+    });
+
+    // Mouse wheel zoom
+    container.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const delta = e.deltaY > 0 ? 0.9 : 1.1;
+      scale = Math.max(0.1, Math.min(4, scale * delta));
+      updateTransform();
+    });
+
+    // Touch drag
+    let touchStartX, touchStartY;
+    container.addEventListener('touchstart', (e) => {
+      if (e.touches.length === 1) {
+        const touch = e.touches[0];
+        touchStartX = touch.clientX - lastX;
+        touchStartY = touch.clientY - lastY;
+      } else if (e.touches.length === 2) {
+        const touch1 = e.touches[0];
+        const touch2 = e.touches[1];
+        initialDistance = Math.hypot(
+          touch2.clientX - touch1.clientX,
+          touch2.clientY - touch1.clientY
+        );
+        initialScale = scale;
+      }
+    });
+
+    container.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+      if (e.touches.length === 1) {
+        const touch = e.touches[0];
+        lastX = touch.clientX - touchStartX;
+        lastY = touch.clientY - touchStartY;
+        translateX = lastX;
+        translateY = lastY;
+        updateTransform();
+      } else if (e.touches.length === 2) {
+        const touch1 = e.touches[0];
+        const touch2 = e.touches[1];
+        const currentDistance = Math.hypot(
+          touch2.clientX - touch1.clientX,
+          touch2.clientY - touch1.clientY
+        );
+        scale = Math.max(0.1, Math.min(4, initialScale * (currentDistance / initialDistance)));
+        updateTransform();
+      }
+    });
+
+    // Double tap to zoom
+    let lastTap = 0;
+    container.addEventListener('touchend', (e) => {
+      const currentTime = new Date().getTime();
+      const tapLength = currentTime - lastTap;
+      if (tapLength < 300 && tapLength > 0) {
+        if (scale > 1) {
+          fitToScreen();
+        } else {
+          scale = 2;
+          updateTransform();
+        }
+      }
+      lastTap = currentTime;
+    });
+
+    loadImage();
+  </script>
+</body>
+</html>
