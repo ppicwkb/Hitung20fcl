@@ -1,327 +1,294 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-  <title>Sushi Ebi</title>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      touch-action: none;
-    }
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: #1a1a1a;
-      overflow: hidden;
-      width: 100vw;
-      height: 100vh;
-    }
-    #imageContainer {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      cursor: grab;
-      background: #000;
-    }
-    #imageContainer.grabbing {
-      cursor: grabbing;
-    }
-    #seImage {
-      position: absolute;
-      max-width: none;
-      left: 50%;
-      top: 50%;
-      transform: translate(-50%, -50%);
-      transform-origin: center center;
-      transition: transform 0.1s ease-out;
-      user-select: none;
-      -webkit-user-drag: none;
-    }
-    .controls {
-      position: fixed;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      display: flex;
-      gap: 10px;
-      z-index: 100;
-      background: rgba(0, 0, 0, 0.7);
-      padding: 15px 20px;
-      border-radius: 50px;
-      backdrop-filter: blur(10px);
-    }
-    button {
-      background: rgba(255, 255, 255, 0.2);
-      color: white;
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      padding: 10px 20px;
-      border-radius: 25px;
-      cursor: pointer;
-      font-size: 14px;
-      font-weight: 500;
-      transition: all 0.3s ease;
-      backdrop-filter: blur(5px);
-    }
-    button:hover {
-      background: rgba(255, 255, 255, 0.3);
-      transform: scale(1.05);
-    }
-    button:active {
-      transform: scale(0.95);
-    }
-    .zoom-indicator {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      background: rgba(0, 0, 0, 0.7);
-      color: white;
-      padding: 10px 20px;
-      border-radius: 20px;
-      font-size: 14px;
-      z-index: 100;
-      backdrop-filter: blur(10px);
-    }
-    .loading {
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      color: white;
-      font-size: 18px;
-      z-index: 50;
-      display: none;
-    }
-    .loading.active {
-      display: block;
-    }
-    @media (max-width: 768px) {
-      .controls {
-        bottom: 10px;
-        padding: 10px 15px;
-        gap: 5px;
-      }
-      button {
-        padding: 8px 15px;
-        font-size: 12px;
-      }
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hitung Muat MC Kontainer - Professional 3D</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="style.css">
+
+
 </head>
 <body>
-  <div id="imageContainer">
-    <img id="seImage" alt="SE Image">
-  </div>
+    <div class="main-container container mx-auto px-4 py-8">
+        <!-- Enhanced Header -->
+        <div class="text-center mb-12 jiffy-bounce">
+            <div class="header-decoration inline-block">
+                <h1 class="text-5xl font-bold gradient-text mb-4">📦 Hitung Kontainer 3D</h1>
+            </div>
+            <p class="text-xl text-white/80 font-medium jiffy-slide-up"> </p>
+            <div class="mt-6 flex justify-center space-x-4">
+                <div class="glass-card px-4 py-2 rounded-full jiffy-fade-in jiffy-stagger-1">
+                    <span class="text-sm font-medium text-gray-700">WKB-ppic</span>
+                </div>
+                <div class="glass-card px-4 py-2 rounded-full jiffy-fade-in jiffy-stagger-2">
+                    <span class="text-sm font-medium text-gray-700">PLAN-load</span>
+                </div>
+                <div class="glass-card px-4 py-2 rounded-full jiffy-fade-in jiffy-stagger-3">
+                    <span class="text-sm font-medium text-gray-700">AI-Powered</span>
+                </div>
+            </div>
+        </div>
 
-  <div class="loading" id="loading">⏳ Memuat gambar...</div>
-  <div class="zoom-indicator" id="zoomIndicator">100%</div>
+        <div class="grid lg:grid-cols-2 gap-6 lg:gap-8">
+            <!-- Input Panel -->
+            <div class="glass-card rounded-2xl shadow-2xl p-6 lg:p-8 jiffy-fade-in jiffy-stagger-1">
+                <h2 class="section-header text-2xl lg:text-3xl font-bold text-gray-800 mb-6 lg:mb-8">⚙️ Pengaturan</h2>
 
-  <div class="controls">
-    <button onclick="zoomIn()">🔍+</button>
-    <button onclick="zoomOut()">🔍−</button>
-    <button onclick="resetView()">↺ Reset</button>
-    <button onclick="fitToScreen()">⛶ Fit</button>
-    <button onclick="openWebsite()">🌐 Buka Web</button>
-    <button onclick="downloadImage()">⬇</button>
-    <button onclick="refreshImage()">🔄</button>
-  </div>
+                <!-- Container Size -->
+                <div class="mb-6 lg:mb-8">
+                    <h3 class="text-lg lg:text-xl font-semibold text-gray-700 mb-4 flex items-center">
+                        <span class="w-7 h-7 lg:w-8 lg:h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white text-sm mr-3 jiffy-pulse">📏</span>
+                        Ukuran Kontainer (cm)
+                    </h3>
+                    <div class="glass-card p-4 rounded-xl mb-4 jiffy-hover-lift cursor-pointer" onclick="toggleContainerPanel()">
+                        <div class="text-center">
+                            <div id="containerVolume" class="text-2xl lg:text-3xl font-bold gradient-text">66.54 m³</div>
+                            <div class="text-sm text-gray-600 font-medium">Volume Kontainer </div>
+                            <div class="text-xs text-gray-500 mt-1">▼ Klik untuk expand</div>
+                        </div>
+                    </div>
+                    <div id="containerInputs" class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div class="space-y-2">
+                            <label class="block text-sm font-semibold text-gray-700">Panjang</label>
+                            <input type="number" id="containerLength" value="544" oninput="updateContainerVolume()"
+                                   class="input-field w-full px-4 py-3 rounded-xl font-medium text-center text-base jiffy-hover-lift">
+                        </div>
+                        <div class="space-y-2">
+                            <label class="block text-sm font-semibold text-gray-700">Lebar</label>
+                            <input type="number" id="containerWidth" value="228" oninput="updateContainerVolume()"
+                                   class="input-field w-full px-4 py-3 rounded-xl font-medium text-center text-base jiffy-hover-lift">
+                        </div>
+                        <div class="space-y-2">
+                            <label class="block text-sm font-semibold text-gray-700">Tinggi</label>
+                            <input type="number" id="containerHeight" value="226" oninput="updateContainerVolume()"
+                                   class="input-field w-full px-4 py-3 rounded-xl font-medium text-center text-base jiffy-hover-lift">
+                        </div>
+                    </div>
+                </div>
 
-  <script>
-    const container = document.getElementById('imageContainer');
-    const img = document.getElementById('seImage');
-    const loading = document.getElementById('loading');
-    const zoomIndicator = document.getElementById('zoomIndicator');
-        const dropboxLink = "https://www.dropbox.com/scl/fi/9fzo1juzvwxod5703guml/SE.jpeg?rlkey=9o28w43nfxiawm0jqefhzjyai&raw=1";
+                <!-- Box Size -->
+                <div class="mb-6 lg:mb-8">
+                    <h3 class="text-lg lg:text-xl font-semibold text-gray-700 mb-4 flex items-center">
+                        <span class="w-7 h-7 lg:w-8 lg:h-8 bg-gradient-to-r from-green-500 to-blue-500 rounded-full flex items-center justify-center text-white text-sm mr-3 jiffy-pulse">📦</span>
+                        Ukuran MC (cm)
+                    </h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div class="space-y-2">
+                            <label class="block text-sm font-semibold text-gray-700">Panjang</label>
+                            <input type="number" id="boxLength" value="60" 
+                                   class="input-field w-full px-4 py-3 rounded-xl font-medium text-center text-base jiffy-hover-lift">
+                        </div>
+                        <div class="space-y-2">
+                            <label class="block text-sm font-semibold text-gray-700">Lebar</label>
+                            <input type="number" id="boxWidth" value="40" 
+                                   class="input-field w-full px-4 py-3 rounded-xl font-medium text-center text-base jiffy-hover-lift">
+                        </div>
+                        <div class="space-y-2">
+                            <label class="block text-sm font-semibold text-gray-700">Tinggi</label>
+                            <input type="number" id="boxHeight" value="30" 
+                                   class="input-field w-full px-4 py-3 rounded-xl font-medium text-center text-base jiffy-hover-lift">
+                        </div>
+                    </div>
+                </div>
 
-    let scale = 1;
-    let translateX = 0;
-    let translateY = 0;
-    let isDragging = false;
-    let startX, startY;
-    let lastX = 0, lastY = 0;
+                <!-- Layout Pattern -->
+                <div class="mb-6 lg:mb-8">
+                    <h3 class="text-lg lg:text-xl font-semibold text-gray-700 mb-4 flex items-center">
+                        <span class="w-7 h-7 lg:w-8 lg:h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white text-sm mr-3 jiffy-pulse">🎯</span>
+                        Pola Penataan
+                    </h3>
+                    <div class="grid grid-cols-2 gap-3">
+                        <label class="radio-card border-2 rounded-xl p-3 lg:p-4 jiffy-hover-lift">
+                            <input type="radio" name="layoutPattern" value="normal" checked class="sr-only">
+                            <div class="radio-content text-center">
+                                <div class="text-2xl mb-2">□</div>
+                                <div class="font-semibold text-gray-700 text-sm lg:text-base">Normal</div>
+                                <div class="text-xs text-gray-500">Penataan standar</div>
+                            </div>
+                        </label>
+                        <label class="radio-card border-2 rounded-xl p-3 lg:p-4 jiffy-hover-lift">
+                            <input type="radio" name="layoutPattern" value="zigzag" class="sr-only">
+                            <div class="radio-content text-center">
+                                <div class="text-2xl mb-2">⟲</div>
+                                <div class="font-semibold text-gray-700 text-sm lg:text-base">Zig-Zag</div>
+                                <div class="text-xs text-gray-500">Pola bergantian</div>
+                            </div>
+                        </label>
+                        <label class="radio-card border-2 rounded-xl p-3 lg:p-4 jiffy-hover-lift">
+                            <input type="radio" name="layoutPattern" value="offset" class="sr-only">
+                            <div class="radio-content text-center">
+                                <div class="text-2xl mb-2">⬢</div>
+                                <div class="font-semibold text-gray-700 text-sm lg:text-base">Offset</div>
+                                <div class="text-xs text-gray-500">Pola bergeser</div>
+                            </div>
+                        </label>
+                        <label class="radio-card border-2 rounded-xl p-3 lg:p-4 jiffy-hover-lift">
+                            <input type="radio" name="layoutPattern" value="optimal" class="sr-only">
+                            <div class="radio-content text-center">
+                                <div class="text-2xl mb-2">🎯</div>
+                                <div class="font-semibold text-gray-700 text-sm lg:text-base">Optimal</div>
+                                <div class="text-xs text-gray-500">AI terbaik</div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
 
-    // Touch zoom
-    let initialDistance = 0;
-    let initialScale = 1;
+                <!-- Additional Options -->
+                <div class="mb-6 lg:mb-8">
+                    <h3 class="text-lg lg:text-xl font-semibold text-gray-700 mb-4 flex items-center">
+                        <span class="w-7 h-7 lg:w-8 lg:h-8 bg-gradient-to-r from-orange-500 to-red-500 rounded-full flex items-center justify-center text-white text-sm mr-3 jiffy-pulse">🔧</span>
+                        Opsi Tambahan
+                    </h3>
+                    <div class="space-y-4">
+                        <label class="flex items-center p-4 glass-card rounded-xl cursor-pointer jiffy-hover-lift transition-all">
+                            <input type="checkbox" id="allowRotation" checked 
+                                   class="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500">
+                            <div class="ml-4">
+                                <div class="font-semibold text-gray-700 text-base">Izinkan rotasi MC (90°)</div>
+                                <div class="text-sm text-gray-500">Meningkatkan efisiensi penataan</div>
+                            </div>
+                        </label>
+                        <label class="flex items-center p-4 glass-card rounded-xl cursor-pointer jiffy-hover-lift transition-all">
+                            <input type="checkbox" id="enable3D" 
+                                   class="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500">
+                            <div class="ml-4">
+                                <div class="font-semibold text-gray-700 text-base">Mode Visualisasi 3D</div>
+                                <div class="text-sm text-gray-500">Tampilan interaktif dengan kontrol kamera</div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
 
-    function loadImage() {
-      loading.classList.add('active');
-      const noCacheUrl = `${dropboxLink}&t=${Date.now()}`;
-      
-      img.onload = () => {
-        loading.classList.remove('active');
-        fitToScreen();
-      };
-      
-      img.onerror = () => {
-        loading.textContent = '❌ Gagal memuat gambar';
-      };
-      
-      img.src = noCacheUrl;
-    }
+                <!-- Action Buttons -->
+                <div class="space-y-4">
+                    <button onclick="calculateOptimalLayout()" 
+                            class="gradient-button w-full text-white font-bold py-4 px-8 rounded-xl shadow-lg text-lg jiffy-button-press jiffy-hover-lift">
+                        🧮 Hitung Layout Optimal
+                    </button>
+                </div>
+            </div>
 
-    function updateTransform() {
-      const rect = img.getBoundingClientRect();
-      const centerX = window.innerWidth / 2;
-      const centerY = window.innerHeight / 2;
-      
-      img.style.transform = `translate(calc(-50% + ${translateX}px), calc(-50% + ${translateY}px)) scale(${scale})`;
-      zoomIndicator.textContent = `${Math.round(scale * 100)}%`;
-    }
+            <!-- Results Panel -->
+            <div class="glass-card rounded-2xl shadow-2xl p-6 lg:p-8 jiffy-fade-in jiffy-stagger-2">
+                <h2 class="section-header text-2xl lg:text-3xl font-bold text-gray-800 mb-6 lg:mb-8">📊 Hasil Perhitungan</h2>
 
-    function fitToScreen() {
-      const containerWidth = container.clientWidth;
-      const containerHeight = container.clientHeight;
-      const imgWidth = img.naturalWidth;
-      const imgHeight = img.naturalHeight;
+                <div id="resultsContainer" class="space-y-6">
+                    <div class="text-center text-gray-500 py-12">
+                        <div class="text-8xl mb-6 jiffy-pulse">📦</div>
+                        <p class="text-lg font-medium jiffy-fade-in">Masukkan ukuran dan klik "Hitung Layout Optimal" untuk melihat hasil</p>
+                        <div class="mt-4 text-sm text-gray-400 jiffy-fade-in jiffy-stagger-1">Sistem AI siap menganalisis konfigurasi optimal Anda</div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-      const scaleX = containerWidth / imgWidth;
-      const scaleY = containerHeight / imgHeight;
-      scale = Math.min(scaleX, scaleY) * 0.95;
+        <!-- Enhanced Visualization Panel -->
+        <div class="mt-8 lg:mt-12 glass-card rounded-2xl shadow-2xl p-6 lg:p-8 jiffy-fade-in jiffy-stagger-3">
+            <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 lg:mb-8 gap-4">
+                <h2 class="section-header text-2xl lg:text-3xl font-bold text-gray-800">🎯 Visualisasi Layout</h2>
+                <div class="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
+                    <button id="toggle3DMode" onclick="toggle3DVisualization()" 
+                            class="visualization-mode-toggle text-white px-6 py-3 rounded-xl font-semibold text-base jiffy-button-press jiffy-hover-lift">
+                        🎮 Mode 3D
+                    </button>
+                    
+                </div>
+            </div>
 
-      // Reset ke tengah
-      translateX = 0;
-      translateY = 0;
-      lastX = 0;
-      lastY = 0;
+            <!-- Layer Controls -->
+            <div id="layerControls" class="hidden mb-6 control-panel p-4 lg:p-6 rounded-xl jiffy-elastic">
+                <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between mb-4 gap-3">
+                    <h4 class="text-lg font-bold text-gray-700">🏗️ Kontrol Sap</h4>
+                    <div class="flex items-center gap-4">
+                        <label class="flex items-center gap-2">
+                            <input type="checkbox" id="showAllLayers" onchange="toggleLayerMode()" 
+                                   class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500">
+                            <span class="text-sm font-medium text-gray-700">Tampilkan Semua Sap</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="text-sm text-gray-500 bg-blue-50 p-3 rounded-lg mb-4">
+                    💡 <strong>Sap:</strong> Lapisan dari depan ke belakang
+                </div>
+                
+                <!-- Layer Tabs -->
+                <div id="layerTabs" class="flex gap-2 mb-4 overflow-x-auto pb-2"></div>
+                
+                <!-- Layer Slider -->
+                <div class="flex items-center gap-4 lg:gap-6">
+                    <label class="text-sm font-semibold text-gray-700 min-w-16">Sap:</label>
+                    <input type="range" id="layerSlider" min="1" max="1" value="1" 
+                           class="control-slider flex-1" onchange="showSpecificLayer(this.value)">
+                    <span id="layerDisplay" class="text-sm font-bold text-gray-700 min-w-16 text-center">1 / 1</span>
+                </div>
+            </div>
 
-      img.style.left = '50%';
-      img.style.top = '50%';
-      img.style.transform = `translate(-50%, -50%) scale(${scale})`;
-      zoomIndicator.textContent = `${Math.round(scale * 100)}%`;
-    }
+            <!-- 3D Controls Panel -->
+            <div id="threeDControls" class="hidden mb-6 control-panel p-4 lg:p-6 rounded-xl jiffy-zoom-in">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="space-y-4">
+                        <h4 class="text-lg font-bold text-gray-700 flex items-center">
+                            <span class="w-6 h-6 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white text-xs mr-2">🎮</span>
+                            Kontrol Kamera
+                        </h4>
+                        <div class="space-y-3">
+                            <button onclick="resetCamera()" 
+                                    class="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white py-3 px-4 rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all jiffy-button-press text-base">
+                                🔄 Reset View
+                            </button>
+                            <button id="doorToggleBtn" onclick="toggleContainerDoors()" 
+                                    class="w-full bg-gradient-to-r from-green-500 to-green-600 text-white py-3 px-4 rounded-lg hover:from-green-600 hover:to-green-700 transition-all jiffy-button-press text-base">
+                                🚪 Buka Pintu
+                            </button>
+                            <div class="flex items-center gap-3">
+                                <label class="text-sm font-medium text-gray-700 min-w-20">Wireframe:</label>
+                                <input type="checkbox" id="wireframeMode" onchange="toggleWireframe()" 
+                                       class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <h4 class="text-lg font-bold text-gray-700 flex items-center">
+                            <span class="w-6 h-6 bg-gradient-to-r from-green-500 to-teal-500 rounded-full flex items-center justify-center text-white text-xs mr-2">🎨</span>
+                            Visual Settings
+                        </h4>
+                        <div class="space-y-3">
+                            <div class="flex items-center gap-3">
+                                <label class="text-sm font-medium text-gray-700 min-w-20">Opacity:</label>
+                                <input type="range" id="opacitySlider" min="0.1" max="1" step="0.1" value="0.8" 
+                                       class="control-slider flex-1" onchange="updateOpacity(this.value)">
+                                <span id="opacityValue" class="text-sm font-bold text-gray-700 min-w-8">0.8</span>
+                            </div>
+                            <div class="text-sm text-gray-500 bg-gray-100 p-3 rounded-lg">
+                                💡 <strong>Tips:</strong> Drag untuk memutar, scroll untuk zoom, klik kanan untuk pan
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-    function resetView() {
-      scale = 1;
-      translateX = 0;
-      translateY = 0;
-      img.style.left = '50%';
-      img.style.top = '50%';
-      img.style.transform = 'translate(-50%, -50%)';
-      zoomIndicator.textContent = '100%';
-    }
+            <!-- Visualization Container -->
+            <div id="visualizationContainer" class="border-4 border-gray-200 rounded-2xl p-6 lg:p-8 min-h-80 lg:min-h-96 flex items-center justify-center bg-gradient-to-br from-gray-50 to-white jiffy-hover-lift">
+                <div class="text-center text-gray-500">
+                    <div class="text-6xl lg:text-8xl mb-6 jiffy-pulse">🎨</div>
+                    <p class="text-lg lg:text-xl font-medium jiffy-fade-in">Visualisasi akan muncul setelah perhitungan</p>
+                    <div class="mt-4 text-sm text-gray-400 jiffy-fade-in jiffy-stagger-1">Sistem akan menampilkan layout 2D/3D interaktif</div>
+                </div>
+            </div>
 
-    function zoomIn() {
-      scale = Math.min(scale * 1.2, 4);
-      updateTransform();
-    }
-
-    function zoomOut() {
-      scale = Math.max(scale / 1.2, 0.1);
-      updateTransform();
-    }
-
-    function downloadImage() {
-      const link = document.createElement('a');
-      link.href = img.src;
-      link.download = 'SE.jpg';
-      link.click();
-    }
-
-    function refreshImage() {
-      loadImage();
-    }
-
-    function openWebsite() {
-      window.open('https://ppicwkb.github.io/data/', '_blank');
-    }
-
-    // Mouse drag
-    container.addEventListener('mousedown', (e) => {
-      isDragging = true;
-      container.classList.add('grabbing');
-      startX = e.clientX - lastX;
-      startY = e.clientY - lastY;
-    });
-
-    container.addEventListener('mousemove', (e) => {
-      if (!isDragging) return;
-      e.preventDefault();
-      lastX = e.clientX - startX;
-      lastY = e.clientY - startY;
-      translateX = lastX;
-      translateY = lastY;
-      updateTransform();
-    });
-
-    container.addEventListener('mouseup', () => {
-      isDragging = false;
-      container.classList.remove('grabbing');
-    });
-
-    container.addEventListener('mouseleave', () => {
-      isDragging = false;
-      container.classList.remove('grabbing');
-    });
-
-    // Mouse wheel zoom
-    container.addEventListener('wheel', (e) => {
-      e.preventDefault();
-      const delta = e.deltaY > 0 ? 0.9 : 1.1;
-      scale = Math.max(0.1, Math.min(4, scale * delta));
-      updateTransform();
-    });
-
-    // Touch drag
-    let touchStartX, touchStartY;
-    container.addEventListener('touchstart', (e) => {
-      if (e.touches.length === 1) {
-        const touch = e.touches[0];
-        touchStartX = touch.clientX - lastX;
-        touchStartY = touch.clientY - lastY;
-      } else if (e.touches.length === 2) {
-        const touch1 = e.touches[0];
-        const touch2 = e.touches[1];
-        initialDistance = Math.hypot(
-          touch2.clientX - touch1.clientX,
-          touch2.clientY - touch1.clientY
-        );
-        initialScale = scale;
-      }
-    });
-
-    container.addEventListener('touchmove', (e) => {
-      e.preventDefault();
-      if (e.touches.length === 1) {
-        const touch = e.touches[0];
-        lastX = touch.clientX - touchStartX;
-        lastY = touch.clientY - touchStartY;
-        translateX = lastX;
-        translateY = lastY;
-        updateTransform();
-      } else if (e.touches.length === 2) {
-        const touch1 = e.touches[0];
-        const touch2 = e.touches[1];
-        const currentDistance = Math.hypot(
-          touch2.clientX - touch1.clientX,
-          touch2.clientY - touch1.clientY
-        );
-        scale = Math.max(0.1, Math.min(4, initialScale * (currentDistance / initialDistance)));
-        updateTransform();
-      }
-    });
-
-    // Double tap to zoom
-    let lastTap = 0;
-    container.addEventListener('touchend', (e) => {
-      const currentTime = new Date().getTime();
-      const tapLength = currentTime - lastTap;
-      if (tapLength < 300 && tapLength > 0) {
-        if (scale > 1) {
-          fitToScreen();
-        } else {
-          scale = 2;
-          updateTransform();
-        }
-      }
-      lastTap = currentTime;
-    });
-
-    loadImage();
-  </script>
-</body>
+            <!-- 3D Container -->
+            <div id="threejs-container" class="hidden rounded-2xl overflow-hidden"></div>
+        </div>
+    </div>
+    
+    <script src ="main.js"></script>
+    
+    <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'96d0f256733bea83',t:'MTc1NDg0NDE0OC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
